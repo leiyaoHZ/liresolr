@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
 curl http://localhost:8888/solr/images/update  -H "Content-Type: text/xml" --data-binary @add0.xml
 curl http://localhost:8888/solr/images/update  -H "Content-Type: text/xml" --data-binary @add1.xml
