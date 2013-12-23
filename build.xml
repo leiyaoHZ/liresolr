@@ -100,7 +100,7 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
     </target>
 
     <target name="copy_jar_to_jetty" depends="dist">
-        <copy file="dist/lire-request-handler.jar" todir="D:\Java\Solr-LIRE-Jetty-Example\solr-webapp\webapp\WEB-INF\lib"/>
+        <copy file="dist/lire-request-handler.jar" todir="/Users/ferdous/projects/digitalcandy/search-app/conf/solr/cores/images_2/lib"/>
     </target>
 
     <target name="index" depends="compile">
@@ -108,7 +108,7 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
         <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
             <jvmarg line="-Xmx2048M -server"/>
             <!-- adapt this argument to use your pictures -->
-            <arg line="-i D:/Temp/tmp/dir.txt -n 16 -f"/>
+            <arg line="-i /Users/ferdous/projects/digitalcandy/datam/data/thumbnails/dir.txt -n 16 -f"/>
 
         </java>
     </target>

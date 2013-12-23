@@ -82,7 +82,7 @@ import java.util.List;
 // <delete><query>id:*</query></delete>
 
 public class AddImages {
-    static String baseURL = "http://localhost:9000/solr/lire";
+    static String baseURL = "http://localhost:8888/solr/images/lire";
 
     public static void main(String[] args) throws IOException, InterruptedException {
         BitSampling.readHashFunctions();
