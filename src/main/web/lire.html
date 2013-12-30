@@ -70,7 +70,7 @@
 	
 $( document ).ready(function() {
 	// get JSON-formatted data from the server
-	$.getJSON( "lire/lireq", function( myResult ) {
+	$.getJSON( "http://localhost:8888/solr/images/lireq", function( myResult ) {
 		$("#perf").html("Index search time: " + myResult.responseHeader.QTime + " ms");
 		console.log(myResult);
 	    
@@ -99,7 +99,7 @@ $( document ).ready(function() {
 });
 
 function extract(field, url) {
-	serverUrl = "lire/lireq?extract="+url+"&field="+field+"_ha";
+	serverUrl = "http://localhost:8888/solr/images/lireq?extract="+url+"&field="+field+"_ha";
 	console.log(serverUrl);
 	$.getJSON( serverUrl, function( myResult ) {
 		console.log(myResult);

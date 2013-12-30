@@ -66,10 +66,10 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
 
     <target name="dist" depends="compile">
         <mkdir dir="${dist}"/>
-        <!--mkdir dir="${dist}/lib"/>
-        <mkdir dir="${dist}/docs"/-->
+        <mkdir dir="${dist}/lib"/>
+        <mkdir dir="${dist}/docs"/>
 
-        <!--copy todir="${dist}">
+        <copy todir="${dist}">
             <fileset dir="lib">
                 <patternset>
                     <include name="**/*.*"/>
@@ -77,7 +77,7 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
                     <exclude name="**/.svn/*"/>
                 </patternset>
             </fileset>
-        </copy-->
+        </copy>
         <unjar src="lib/lire.jar" dest="${build}"/>
         <!-- replace the bit sampling data file -->
 
@@ -108,7 +108,7 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
         <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
             <jvmarg line="-Xmx2048M -server"/>
             <!-- adapt this argument to use your pictures -->
-            <arg line="-i /Users/ferdous/projects/digitalcandy/datam/data/dir.txt -n 16 -f"/>
+            <arg line="-i /Users/ferdous/projects/digitalcandy/datam/data/solr_dih/dir.txt -n 16 -f"/>
 
         </java>
     </target>
