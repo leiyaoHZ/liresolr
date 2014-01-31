@@ -1,3 +1,9 @@
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
 data
 solrdocs
 dist
