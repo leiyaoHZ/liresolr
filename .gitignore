@@ -8,3 +8,8 @@ data
 solrdocs
 dist
 classes
+list.txt
+.ant_targets
+liresolr.eml
+liresolr.iml
+.project
