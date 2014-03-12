@@ -62,142 +62,145 @@ import java.util.Map;
  * @author Mathias Lux, 17.09.13 12:26
  */
 public class LireValueSource extends ValueSource {
-    String field = "cl_hi";  // default field
-    byte[] histogramData;
-    LireFeature feature, tmpFeature;
-    double maxDistance = -1;
-    String objectHashBase = null; // used to store the combination of parameters to create a way to counter caching of functions with different function values.
+	String field = "cl_hi";  // default field
+	byte[] histogramData;
+	LireFeature feature, tmpFeature;
+	double maxDistance = -1;
+	String objectHashBase = null; // used to store the combination of parameters to create a way to counter caching of functions with different function values.
 
-    /**
-     * @param featureField
-     * @param hist
-     * @param maxDistance  the distance value returned if there is no distance calculation possible.
-     */
-    public LireValueSource(String featureField, byte[] hist, double maxDistance) {
-        if (featureField != null) field = featureField;
-        if (!field.endsWith("_hi")) field += "_hi";
-        this.histogramData = hist;
-        this.maxDistance = maxDistance;
+	/**
+	 * @param featureField
+	 * @param hist
+	 * @param maxDistance  the distance value returned if there is no distance calculation possible.
+	 */
+	public LireValueSource(String featureField, byte[] hist, double maxDistance) {
+		if (featureField != null) field = featureField;
+		if (!field.endsWith("_hi")) field += "_hi";
+		this.histogramData = hist;
+		this.maxDistance = maxDistance;
 
-        if (field == null) {
-            feature = new EdgeHistogram();
-            tmpFeature = new EdgeHistogram();
-        } else {
-            if (field.startsWith("cl")) {
-                feature = new ColorLayout();
-                tmpFeature = new ColorLayout();
-            } else if (field.startsWith("jc")) {
-                feature = new JCD();
-                tmpFeature = new JCD();
-            } else if (field.startsWith("ph")) {
-                feature = new PHOG();
-                tmpFeature = new PHOG();
-            } else if (field.startsWith("oh")) {
-                feature = new OpponentHistogram();
-                tmpFeature = new OpponentHistogram();
-            } else {
-                feature = new EdgeHistogram();
-                tmpFeature = new EdgeHistogram();
-            }
-        }
-        // debug ...
-        System.out.println("Setting " + feature.getClass().getName() + " to " + Base64.byteArrayToBase64(hist, 0, hist.length));
-        // adding all parameters to a string to create a
-        objectHashBase = field + Arrays.toString(hist) + maxDistance;
-        feature.setByteArrayRepresentation(hist);
-    }
+		if (field == null) {
+			feature = new EdgeHistogram();
+			tmpFeature = new EdgeHistogram();
+		} else {
+			if (field.startsWith("cl")) {
+				feature = new ColorLayout();
+				tmpFeature = new ColorLayout();
+			} else if (field.startsWith("jc")) {
+				feature = new JCD();
+				tmpFeature = new JCD();
+			} else if (field.startsWith("ph")) {
+				feature = new PHOG();
+				tmpFeature = new PHOG();
+			} else if (field.startsWith("oh")) {
+				feature = new OpponentHistogram();
+				tmpFeature = new OpponentHistogram();
+			} else {
+				feature = new EdgeHistogram();
+				tmpFeature = new EdgeHistogram();
+			}
+		}
+		// debug ...
+		System.out.println("Setting " + feature.getClass().getName() + " to " + Base64.byteArrayToBase64(hist, 0, hist.length));
+		// adding all parameters to a string to create a
+		objectHashBase = field + Arrays.toString(hist) + maxDistance;
+		feature.setByteArrayRepresentation(hist);
+	}
 
-    public FunctionValues getValues(Map context, AtomicReaderContext readerContext) throws IOException {
-        final FieldInfo fieldInfo = readerContext.reader().getFieldInfos().fieldInfo(field);
-        if (fieldInfo != null && fieldInfo.getDocValuesType() == FieldInfo.DocValuesType.BINARY) {
-            final BinaryDocValues binaryValues = FieldCache.DEFAULT.getTerms(readerContext.reader(), field);
-            return new FunctionValues() {
-                BytesRef tmp = new BytesRef();
-
-                @Override
-                public boolean exists(int doc) {
-                    return bytesVal(doc, tmp);
-                }
-
-                @Override
-                public boolean bytesVal(int doc, BytesRef target) {
-                    binaryValues.get(doc, target);
-                    return target.length > 0;
-                }
-
-                // This is the actual value returned
-                @Override
-                public float floatVal(int doc) {
-                    binaryValues.get(doc, tmp);
-                    if (tmp.length > 0) {
-                        tmpFeature.setByteArrayRepresentation(tmp.bytes, tmp.offset, tmp.length);
-                        return tmpFeature.getDistance(feature);
-                    } else
-                        return (float) maxDistance; // make sure max distance is returned for those without value!
-                }
-
-                @Override
-                public Object objectVal(int doc) {
-                    return floatVal(doc);
-                }
-
-                @Override
-                public String toString(int doc) {
-                    return description() + '=' + strVal(doc);
-                }
-
-                @Override
-                /**
-                 * This method has to be implemented to support sorting!
-                 */
-                public double doubleVal(int doc) {
-                    return (double) floatVal(doc);
-                }
-            };
-        } else {
-            // there is no DocVal to sort by. Therefore we need to set the function value to -1 and everything without DocVal gets ranked first?
-            return new DocTermsIndexDocValues(this, readerContext, field) {
-                @Override
-                protected String toTerm(String readableValue) {
-                    return Double.toString(maxDistance);
-                }
-
-                @Override
-                public Object objectVal(int doc) {
-                    return maxDistance;
-                }
-
-                @Override
-                public String toString(int doc) {
-                    return description() + '=' + strVal(doc);
-                }
+	public FunctionValues getValues(Map context, AtomicReaderContext readerContext) throws IOException {
+		final FieldInfo fieldInfo = readerContext.reader().getFieldInfos().fieldInfo(field);
+		if (fieldInfo != null && fieldInfo.getDocValuesType() == FieldInfo.DocValuesType.BINARY) {
+            //final BinaryDocValues binaryValues = FieldCache.DEFAULT.getTerms(readerContext.reader(), field);
+			final BinaryDocValues binaryValues = FieldCache.DEFAULT.getTerms(readerContext.reader(), field, true);
 
 
-                public double doubleVal(int doc) {
-                    return maxDistance;
-                }
-            };
-        }
-    }
+			return new FunctionValues() {
+				BytesRef tmp = new BytesRef();
 
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof LireValueSource)
-            // check if the function has had the same parameters.
-            return objectHashBase.equals(((LireValueSource) o).objectHashBase);
-        else
-            return false;
-    }
+				@Override
+				public boolean exists(int doc) {
+					return bytesVal(doc, tmp);
+				}
 
-    @Override
-    public int hashCode() {
-        return objectHashBase.hashCode();
-    }
+				@Override
+				public boolean bytesVal(int doc, BytesRef target) {
+					binaryValues.get(doc, target);
+					return target.length > 0;
+				}
 
-    @Override
-    public String description() {
-        return "distance to a given feature vector";
-    }
+				// This is the actual value returned
+				@Override
+				public float floatVal(int doc) {
+					binaryValues.get(doc, tmp);
+					if (tmp.length > 0) {
+						tmpFeature.setByteArrayRepresentation(tmp.bytes, tmp.offset, tmp.length);
+						return tmpFeature.getDistance(feature);
+					} else
+						return (float) maxDistance; // make sure max distance is returned for those without value!
+				}
+
+				@Override
+				public Object objectVal(int doc) {
+					return floatVal(doc);
+				}
+
+				@Override
+				public String toString(int doc) {
+					return description() + '=' + strVal(doc);
+				}
+
+				@Override
+				/**
+				 * This method has to be implemented to support sorting!
+				 */
+				public double doubleVal(int doc) {
+					return (double) floatVal(doc);
+				}
+			};
+		} else {
+			// there is no DocVal to sort by. Therefore we need to set the function value to -1 and everything without DocVal gets ranked first?
+			return new DocTermsIndexDocValues(this, readerContext, field) {
+				@Override
+				protected String toTerm(String readableValue) {
+					return Double.toString(maxDistance);
+				}
+
+				@Override
+				public Object objectVal(int doc) {
+					return maxDistance;
+				}
+
+				@Override
+				public String toString(int doc) {
+					return description() + '=' + strVal(doc);
+				}
+
+
+				public double doubleVal(int doc) {
+					return maxDistance;
+				}
+			};
+		}
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof LireValueSource)
+			// check if the function has had the same parameters.
+			return objectHashBase.equals(((LireValueSource) o).objectHashBase);
+		else
+			return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return objectHashBase.hashCode();
+	}
+
+	@Override
+	public String description() {
+		return "distance to a given feature vector";
+	}
 
 
 }
