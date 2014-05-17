@@ -14,6 +14,7 @@
     <property name="doc" value="src/main/doc"/>
     <!-- path to additional files like installer scripts, icons and batch files -->
     <property name="add.files" value="add.files"/>
+    <!--<property name="solrlib" value="/Users/ferdous/projects/digitalcandy/search-app/conf/solr/cores/mediaitems_6/lib/lire"/>-->
     <property name="solrlib" value="/Users/ferdous/projects/digitalcandy/search-app/conf/solr/cores/mediaitems_6/lib/lire"/>
 
     <!-- define the classpath  -->
@@ -110,7 +111,7 @@
         <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
             <jvmarg line="-Xmx2048M -server"/>
             <!-- adapt this argument to use your pictures -->
-            <arg line="-i ./data/out.txt -n 16 -f"/>
+            <arg line="-i /data/digitalcandy/liresolr/out.txt -n 16 -f"/>
 
         </java>
     </target>
