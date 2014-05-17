@@ -14,8 +14,8 @@
     <property name="doc" value="src/main/doc"/>
     <!-- path to additional files like installer scripts, icons and batch files -->
     <property name="add.files" value="add.files"/>
-    <!--<property name="solrlib" value="/Users/ferdous/projects/digitalcandy/search-app/conf/solr/cores/mediaitems_6/lib/lire"/>-->
     <property name="solrlib" value="/Users/ferdous/projects/digitalcandy/search-app/conf/solr/cores/mediaitems_6/lib/lire"/>
+    <!--<property name="solrlib" value="/data/lucid/conf/solr/cores/mediaitems_3/lib/lire/"/>-->
 
     <!-- define the classpath  -->
     <path id="classpath.path">
