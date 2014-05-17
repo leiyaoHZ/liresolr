@@ -1,5 +1,5 @@
-Build-Date: 13.03.2014 12:56 AM
-Build-Number: 266
-Class-Path: lib/commons-codec-1.8.jar
+Name: LireRequestHandler
+Build-Date: 17.05.2014 05:53 PM
+Build-Number: 202
+Class-Path: lib/commons-codec-1.8.jar lib/lire.jar lib/JOpenSurf.jar
 Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
-        

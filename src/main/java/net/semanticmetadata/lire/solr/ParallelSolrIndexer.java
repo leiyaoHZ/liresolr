@@ -1,42 +1,3 @@
-/*
- * This file is part of the LIRE project: http://www.semanticmetadata.net/lire
- * LIRE is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * LIRE is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with LIRE; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * We kindly ask you to refer the any or one of the following publications in
- * any publication mentioning or employing Lire:
- *
- * Lux Mathias, Savvas A. Chatzichristofis. Lire: Lucene Image Retrieval –
- * An Extensible Java CBIR Library. In proceedings of the 16th ACM International
- * Conference on Multimedia, pp. 1085-1088, Vancouver, Canada, 2008
- * URL: http://doi.acm.org/10.1145/1459359.1459577
- *
- * Lux Mathias. Content Based Image Retrieval with LIRE. In proceedings of the
- * 19th ACM International Conference on Multimedia, pp. 735-738, Scottsdale,
- * Arizona, USA, 2011
- * URL: http://dl.acm.org/citation.cfm?id=2072432
- *
- * Mathias Lux, Oge Marques. Visual Information Retrieval using Java and LIRE
- * Morgan & Claypool, 2013
- * URL: http://www.morganclaypool.com/doi/abs/10.2200/S00468ED1V01Y201301ICR025
- *
- * Copyright statement:
- * --------------------
- * (c) 2002-2013 by Mathias Lux (mathias@juggle.at)
- *     http://www.semanticmetadata.net/lire, http://www.lire-project.net
- */
-
 package net.semanticmetadata.lire.solr;
 
 import net.semanticmetadata.lire.imageanalysis.*;
@@ -50,29 +11,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
 
-/**
- * This indexing application allows for parallel extraction of global features from multiple image files for
- * use with the LIRE Solr plugin. It basically takes a list of images (ie. created by something like
- * "dir /s /b > list.txt" or "ls [some parameters] > list.txt".
- * <p/>
- * use it like:
- * <pre>$> java -jar lire-request-handler.jar -i <infile> [-o <outfile>] [-n <threads>] [-m <max_side_length>] [-f]</pre>
- * <p/>
- * Available options are:
- * <ul>
- * <li>-i <infile> … gives a file with a list of images to be indexed, one per line.</li>
- * <li>-o <outfile> ... gives XML file the output is written to. if none is given the outfile is <infile>.xml</li>
- * <li>-n <threads> ... gives the number of threads used for extraction. The number of cores is a good value for that.</li>
- * <li>-m <max-side-length> ... gives a maximum side length for extraction. This option is useful if very larger images are indexed.</li>
- * <li>-f ... forces to overwrite the <outfile>. If the <outfile> already exists and -f is not given, then the operation is aborted.</li>
- * </ul>
- * <p/>
- * You then basically need to enrich the file with whatever metadata you prefer and send it to Solr using for instance curl:
- * <pre>curl http://localhost:9000/solr/lire/update  -H "Content-Type: text/xml" --data-binary @extracted_file.xml
- * curl http://localhost:9000/solr/lire/update  -H "Content-Type: text/xml" --data-binary "<commit/>"</pre>
- *
- * @author Mathias Lux, mathias@juggle.at on  13.08.2013
- */
+
 public class ParallelSolrIndexer implements Runnable {
 	private static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
 	private static boolean force = false;
@@ -325,7 +264,9 @@ public class ParallelSolrIndexer implements Runnable {
 						byte[] buffer = new byte[fileSize];
 						FileInputStream fis = new FileInputStream(next);
 						fis.read(buffer);
-						String path = next.getCanonicalPath();
+						// Change to relative path to allow map images to url path
+						// For example localhost/lire/data/[relative_path_to_image]
+						String path = next.getPath();
 						synchronized (images) {
 							images.add(new WorkItem(path, buffer));
 							tmpSize = images.size();
@@ -396,19 +337,11 @@ public class ParallelSolrIndexer implements Runnable {
 						ByteArrayInputStream b = new ByteArrayInputStream(tmp.getBuffer());
 						BufferedImage img = ImageUtils.trimWhiteSpace(ImageIO.read(b));
 						if (maxSideLength > 50) img = ImageUtils.scaleImage(img, maxSideLength);
-						else if (img.getWidth() < 32 || img.getHeight() < 32) { // image is too small to be worked with, for now I just do an upscale.
-							double scaleFactor = 128d;
-							if (img.getWidth() > img.getHeight()) {
-								scaleFactor = (128d / (double) img.getWidth());
-							} else {
-								scaleFactor = (128d / (double) img.getHeight());
-							}
-							img = ImageUtils.scaleImage(img, ((int) (scaleFactor * img.getWidth())), (int) (scaleFactor * img.getHeight()));
-						}
 						byte[] tmpBytes = tmp.getFileName().getBytes();
+						sb.append("<add>");
 						sb.append("<doc>");
 						sb.append("<field name=\"id\">");
-						sb.append("file:" + tmp.getFileName());
+						sb.append(tmp.getFileName());
 						sb.append("</field>");
 						sb.append("<field name=\"title\">");
 						sb.append(new File(tmp.getFileName()).getName());
@@ -429,6 +362,7 @@ public class ParallelSolrIndexer implements Runnable {
 							}
 						}
 						sb.append("</doc>\n");
+						sb.append("</add>\n");
 						// finally write everything to the stream - in case no exception was thrown..
 						if (!individualFiles) {
 							synchronized (dos) {
@@ -436,9 +370,7 @@ public class ParallelSolrIndexer implements Runnable {
 								dos.flush();
 							}
 						} else {
-							String filePath = "/tmp" + tmp.getFileName() + "_solr.xml";
-							System.out.println("Setting out file to " + filePath);
-							OutputStream mos = new BufferedOutputStream(new FileOutputStream(filePath));
+							OutputStream mos = new BufferedOutputStream(new FileOutputStream(tmp.getFileName() + "_solr.xml"));
 							mos.write(sb.toString().getBytes());
 							mos.flush();
 							mos.close();

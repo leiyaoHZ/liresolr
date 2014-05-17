@@ -14,6 +14,7 @@
     <property name="doc" value="src/main/doc"/>
     <!-- path to additional files like installer scripts, icons and batch files -->
     <property name="add.files" value="add.files"/>
+    <property name="solrlib" value="/Users/ferdous/projects/digitalcandy/search-app/conf/solr/cores/mediaitems_6/lib/lire"/>
 
     <!-- define the classpath  -->
     <path id="classpath.path">
@@ -38,11 +39,12 @@
             <entry key="build-number" type="int" value="1" operation="+"/>
         </propertyfile>
         <property file="${config}/build.properties"/>
-        <echo file="default.mf" append="false">Build-Date: ${touch.time}
-Build-Number: ${build-number}
-Class-Path: lib/commons-codec-1.8.jar
-Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
-        </echo>
+        <echo file="default.mf">Name: LireRequestHandler${line.separator}Build-Date: ${touch.time}${line.separator}Build-Number: ${build-number}${line.separator}Class-Path: lib/commons-codec-1.8.jar lib/lire.jar lib/JOpenSurf.jar${line.separator}Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer${line.separator}</echo>
+        <!--<echo file="default.mf" append="false">Build-Date: ${touch.time}-->
+<!--Build-Number: ${build-number}-->
+<!--Class-Path: lib/commons-codec-1.8.jar lib/lire.jar lib/JOpenSurf.jar-->
+<!--Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer-->
+        <!--</echo>-->
         <javac srcdir="${src}" destdir="${build}" debug="true" debuglevel="lines,vars,source">
             <classpath refid="classpath.path"/>
         </javac>
@@ -66,10 +68,10 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
 
     <target name="dist" depends="compile">
         <mkdir dir="${dist}"/>
-        <mkdir dir="${dist}/lib"/>
-        <mkdir dir="${dist}/docs"/>
+        <!--mkdir dir="${dist}/lib"/>
+        <mkdir dir="${dist}/docs"/-->
 
-        <copy todir="${dist}">
+        <!--copy todir="${dist}">
             <fileset dir="lib">
                 <patternset>
                     <include name="**/*.*"/>
@@ -77,8 +79,8 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
                     <exclude name="**/.svn/*"/>
                 </patternset>
             </fileset>
-        </copy>
-        <unjar src="lib/lire.jar" dest="${build}"/>
+        </copy-->
+        <!--unjar src="lib/lire.jar" dest="${build}"/-->
         <!-- replace the bit sampling data file -->
 
         <!--delete file="${build}/net/semanticmetadata/lire/indexing/hashing/LshBitSampling.obj"/-->
@@ -100,7 +102,7 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
     </target>
 
     <target name="copy_jar_to_jetty" depends="dist">
-        <copy file="dist/lire-request-handler.jar" todir="/Users/ferdous/projects/digitalcandy/search-app/conf/solr/cores/images_2/lib"/>
+        <copy file="dist/lire-request-handler.jar" todir="${solrlib}"/>
     </target>
 
     <target name="index" depends="compile">
@@ -108,8 +110,13 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
         <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
             <jvmarg line="-Xmx2048M -server"/>
             <!-- adapt this argument to use your pictures -->
-            <arg line="-i /Users/ferdous/projects/digitalcandy/datam/data/solr_dih/out.txt -n 16 -f"/>
+            <arg line="-i ./data/out.txt -n 16 -f"/>
 
         </java>
+    </target>
+    <target name="web">
+        <war destfile="dist/web.war" webxml="src/main/web/WEB-INF/web.xml">
+            <fileset dir="src/main/web"/>
+        </war>
     </target>
 </project>
