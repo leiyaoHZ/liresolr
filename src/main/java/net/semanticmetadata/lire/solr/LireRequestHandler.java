@@ -74,17 +74,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
-/**
- * This file is part of LIRE, a Java library for content based image retrieval.
- *
- * @author Mathias Lux, mathias@juggle.at, 07.07.13
- */
-
 public class LireRequestHandler extends RequestHandlerBase {
 	private static HashMap<String, Class> fieldToClass = new HashMap<String, Class>(5);
 	private long time = 0;
 	private int countRequests = 0;
 	private int defaultNumberOfResults = 60;
+	private int defaultStartValue = 0;
+
 	/**
 	 * number of candidate results retrieved from the index. The higher this number, the slower,
 	 * the but more accurate the retrieval will be.
@@ -142,6 +138,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 	private void surfUrlSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, ParseException {
 		String url = req.getParams().get("url");
 		int rows = req.getParams().getInt("rows");
+		int start = req.getParams().getInt("start", 0);
 		String mode = req.getParams().get("mode");
 		SolrIndexSearcher searcher = req.getSearcher();
 		searcher.setSimilarity(new BM25Similarity());
@@ -165,7 +162,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 
 			LinkedList<HashMap<String, Comparable>> list = new LinkedList<HashMap<String, Comparable>>();
 
-			for (int i = 0; i < docs.scoreDocs.length; i++) {
+			for (int i = start; i < docs.scoreDocs.length; i++) {
 				float d = 1f / docs.scoreDocs[i].score;
 				HashMap<String, Comparable> m = new HashMap<String, Comparable>(2);
 				m.put("d", d);
@@ -200,7 +197,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 			float maxDistance = -1f;
 			float tmpScore;
 
-			for (int i = 0; i < docs.scoreDocs.length; i++) {
+			for (int i = start; i < docs.scoreDocs.length; i++) {
 				Document doc = reader.document(docs.scoreDocs[i].doc);
 
 				// load interest points from document
@@ -245,6 +242,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 	private void surfIdSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, ParseException {
 		String id = req.getParams().get("id");
 		int rows = req.getParams().getInt("rows");
+		int start = req.getParams().getInt("start", 0);
 		String mode = req.getParams().get("mode");
 		SolrIndexSearcher searcher = req.getSearcher();
 		searcher.setSimilarity(new BM25Similarity());
@@ -278,7 +276,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 
 				LinkedList<HashMap<String, Comparable>> list = new LinkedList<HashMap<String, Comparable>>();
 
-				for (int i = 0; i < docs.scoreDocs.length; i++) {
+				for (int i = start; i < docs.scoreDocs.length; i++) {
 					float d = 1f / docs.scoreDocs[i].score;
 					HashMap<String, Comparable> m = new HashMap<String, Comparable>(2);
 					m.put("d", d);
@@ -313,7 +311,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 				float maxDistance = -1f;
 				float tmpScore;
 
-				for (int i = 0; i < docs.scoreDocs.length; i++) {
+				for (int i = start; i < docs.scoreDocs.length; i++) {
 					Document doc = reader.document(docs.scoreDocs[i].doc);
 
 					// load interest points from document
@@ -391,12 +389,16 @@ public class LireRequestHandler extends RequestHandlerBase {
 		String paramId = req.getParams().get("id");
 		String paramField = "cl_ha";
 		int paramRows = defaultNumberOfResults;
+		int paramStarts = defaultStartValue;
 
 		if (req.getParams().get("field") != null)
 			paramField = req.getParams().get("field");
 
 		if (req.getParams().getInt("rows") != null)
 			paramRows = req.getParams().getInt("rows");
+
+		if (req.getParams().getInt("start") != null)
+			paramStarts = req.getParams().getInt("start");
 
 		// SURF method
 		if ("su_ha".equals(paramField)) {
@@ -425,7 +427,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 				int[] hashes = BitSampling.generateHashes(queryFeature.getDoubleHistogram());
 				// just use 50% of the hashes for search ...
 				BooleanQuery query = createQuery(hashes, paramField, 0.5d);
-				doSearch(rsp, searcher, paramField, paramRows, query, queryFeature);
+				doSearch(rsp, searcher, paramField, paramStarts, paramRows, query, queryFeature);
 			} else {
 				rsp.add("Error", "Did not find an image with the given id " + req.getParams().get("id"));
 			}
@@ -477,9 +479,14 @@ public class LireRequestHandler extends RequestHandlerBase {
 		String paramField = "cl_ha";
 		if (req.getParams().get("field") != null)
 			paramField = req.getParams().get("field");
+
 		int paramRows = defaultNumberOfResults;
 		if (params.get("rows") != null)
 			paramRows = params.getInt("rows");
+
+		int paramStarts = defaultStartValue;
+		if (params.get("start") != null)
+			paramStarts = params.getInt("start");
 
 		// SURF method
 		if ("su_ha".equals(paramField)) {
@@ -511,7 +518,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 			e.printStackTrace();
 		}
 		// search if the feature has been extracted.
-		if (feat != null) doSearch(rsp, req.getSearcher(), paramField, paramRows, query, feat);
+		if (feat != null) doSearch(rsp, req.getSearcher(), paramField, paramStarts, paramRows, query, feat);
 	}
 
 	private void handleExtract(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException {
@@ -573,13 +580,19 @@ public class LireRequestHandler extends RequestHandlerBase {
 		String paramField = "cl_ha";
 		if (req.getParams().get("field") != null)
 			paramField = req.getParams().get("field");
+
 		int paramRows = defaultNumberOfResults;
 		if (params.getInt("rows") != null)
 			paramRows = params.getInt("rows");
+
+		int paramStarts = defaultStartValue;
+		if (params.get("start") != null)
+			paramStarts = params.getInt("start");
+
 		// create boolean query:
 //        System.out.println("** Creating query.");
 		BooleanQuery query = new BooleanQuery();
-		for (int i = 0; i < hashes.length; i++) {
+		for (int i = paramStarts; i < hashes.length; i++) {
 			// be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
 			hashes[i] = hashes[i].trim();
 			if (hashes[i].length() > 0) {
@@ -594,7 +607,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 		queryFeature.setByteArrayRepresentation(featureVector);
 
 		// get results:
-		doSearch(rsp, searcher, paramField, paramRows, query, queryFeature);
+		doSearch(rsp, searcher, paramField, paramStarts, paramRows, query, queryFeature);
 	}
 
 	/**
@@ -610,7 +623,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 	 * @throws IllegalAccessException
 	 * @throws InstantiationException
 	 */
-	private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String field, int maximumHits, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
+	private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String field, int paramStarts, int maximumHits, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
 		// temp feature instance
 		LireFeature tmpFeature = queryFeature.getClass().newInstance();
 		// Taking the time of search for statistical purposes.
@@ -630,7 +643,8 @@ public class LireRequestHandler extends RequestHandlerBase {
 		// iterating and re-ranking the documents.
 		BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), name); // ***  #
 		BytesRef bytesRef = new BytesRef();
-		for (int i = 0; i < docs.scoreDocs.length; i++) {
+
+		for (int i = paramStarts; i < docs.scoreDocs.length; i++) {
 			// using DocValues to retrieve the field values ...
 			binaryValues.get(docs.scoreDocs[i].doc, bytesRef);
 			tmpFeature.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);
@@ -676,7 +690,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 
 	@Override
 	public String getSource() {
-		return "http://lire-project.net";
+		return "https://github.com/dynamicguy/liresolr";
 	}
 
 	@Override

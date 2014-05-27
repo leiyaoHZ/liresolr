@@ -37,7 +37,7 @@ public class IdentityRequestHandler extends RequestHandlerBase {
 
 	@Override
 	public String getSource() {
-		return "http://lire-project.net";
+		return "http://github.com/dynamicguy/liresolr";
 	}
 
 	@Override
