@@ -7,7 +7,7 @@
     <property name="config" value="src/main/resources"/>
     <property name="build" value="classes"/>
     <property name="dist" value="dist"/>
-    <property name="versionstring" value="0.9.5-SNAPSHOT"/>
+    <property name="versionstring" value="v0.1.0"/>
     <property name="solrlib" value="/Users/ferdous/projects/digitalcandy/search-app/conf/solr/cores/media_7/lib/lire"/>
     <property name="test" value="src/main/test"/>
     <!-- path to documentation like README or CHANGES -->
