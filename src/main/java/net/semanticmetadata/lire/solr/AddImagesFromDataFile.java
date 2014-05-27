@@ -11,6 +11,7 @@ import java.util.HashMap;
 
 
 public class AddImagesFromDataFile {
+
 	private static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
 
 	static {
