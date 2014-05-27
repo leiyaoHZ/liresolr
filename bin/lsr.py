@@ -2,8 +2,8 @@
 
 import os
 
-def run(folder_name="/data/digitalcandy/liresolr/images/"):
-    out_file = open('/data/digitalcandy/liresolr/out.txt', 'wb')
+def run(folder_name="/Users/ferdous/projects/digitalcandy/liresolr/data/images/"):
+    out_file = open('/Users/ferdous/projects/digitalcandy/liresolr/out.txt', 'wb')
     for item in os.listdir(folder_name):
         if not item.endswith("xml"):
             line = folder_name + item + '\n'

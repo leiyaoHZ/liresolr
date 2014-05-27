@@ -28,7 +28,7 @@ import org.apache.lucene.util.packed.PackedInts;
 
 /**
  * Lucene 4.1 stored fields format.
- *
+ * <p/>
  * <p><b>Principle</b></p>
  * <p>This {@link StoredFieldsFormat} compresses blocks of 16KB of documents in
  * order to improve the compression ratio compared to document-level
@@ -59,11 +59,11 @@ import org.apache.lucene.util.packed.PackedInts;
  * <li>DocBase --&gt; the ID of the first document of the chunk as a {@link DataOutput#writeVInt VInt}</li>
  * <li>ChunkDocs --&gt; the number of documents in the chunk as a {@link DataOutput#writeVInt VInt}</li>
  * <li>DocFieldCounts --&gt; the number of stored fields of every document in the chunk, encoded as followed:<ul>
- *   <li>if chunkDocs=1, the unique value is encoded as a {@link DataOutput#writeVInt VInt}</li>
- *   <li>else read a {@link DataOutput#writeVInt VInt} (let's call it <tt>bitsRequired</tt>)<ul>
- *     <li>if <tt>bitsRequired</tt> is <tt>0</tt> then all values are equal, and the common value is the following {@link DataOutput#writeVInt VInt}</li>
- *     <li>else <tt>bitsRequired</tt> is the number of bits required to store any value, and values are stored in a {@link PackedInts packed} array where every value is stored on exactly <tt>bitsRequired</tt> bits</li>
- *   </ul></li>
+ * <li>if chunkDocs=1, the unique value is encoded as a {@link DataOutput#writeVInt VInt}</li>
+ * <li>else read a {@link DataOutput#writeVInt VInt} (let's call it <tt>bitsRequired</tt>)<ul>
+ * <li>if <tt>bitsRequired</tt> is <tt>0</tt> then all values are equal, and the common value is the following {@link DataOutput#writeVInt VInt}</li>
+ * <li>else <tt>bitsRequired</tt> is the number of bits required to store any value, and values are stored in a {@link PackedInts packed} array where every value is stored on exactly <tt>bitsRequired</tt> bits</li>
+ * </ul></li>
  * </ul></li>
  * <li>DocLengths --&gt; the lengths of all documents in the chunk, encoded with the same method as DocFieldCounts</li>
  * <li>CompressedDocs --&gt; a compressed representation of &lt;Docs&gt; using the LZ4 compression format</li>
@@ -71,13 +71,13 @@ import org.apache.lucene.util.packed.PackedInts;
  * <li>Doc --&gt; &lt;FieldNumAndType, Value&gt;<sup>DocFieldCount</sup></li>
  * <li>FieldNumAndType --&gt; a {@link DataOutput#writeVLong VLong}, whose 3 last bits are Type and other bits are FieldNum</li>
  * <li>Type --&gt;<ul>
- *   <li>0: Value is String</li>
- *   <li>1: Value is BinaryValue</li>
- *   <li>2: Value is Int</li>
- *   <li>3: Value is Float</li>
- *   <li>4: Value is Long</li>
- *   <li>5: Value is Double</li>
- *   <li>6, 7: unused</li>
+ * <li>0: Value is String</li>
+ * <li>1: Value is BinaryValue</li>
+ * <li>2: Value is Int</li>
+ * <li>3: Value is Float</li>
+ * <li>4: Value is Long</li>
+ * <li>5: Value is Double</li>
+ * <li>6, 7: unused</li>
  * </ul></li>
  * <li>FieldNum --&gt; an ID of the field</li>
  * <li>Value --&gt; {@link DataOutput#writeString(String) String} | BinaryValue | Int | Float | Long | Double depending on Type</li>
@@ -109,14 +109,18 @@ import org.apache.lucene.util.packed.PackedInts;
  * larger than (<tt>2<sup>31</sup> - 2<sup>14</sup></tt>) bytes. In case this
  * is a problem, you should use another format, such as
  * {@link Lucene40StoredFieldsFormat}.</p>
+ *
  * @lucene.experimental
  */
 public final class Lucene41StoredFieldsFormat extends CompressingStoredFieldsFormat {
-    // This is a modified file for stored field compression. It basically needs to be
-    // deleted from the lucene core lib to take effect.
-    /** Sole constructor. */
-    public Lucene41StoredFieldsFormat() {
-        super("Lucene41StoredFields", CompressionMode.FAST_DECOMPRESSION, 512);
-    }
+	// This is a modified file for stored field compression. It basically needs to be
+	// deleted from the lucene core lib to take effect.
+
+	/**
+	 * Sole constructor.
+	 */
+	public Lucene41StoredFieldsFormat() {
+		super("Lucene41StoredFields", CompressionMode.FAST_DECOMPRESSION, 512);
+	}
 
 }

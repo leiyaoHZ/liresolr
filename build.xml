@@ -1,21 +1,44 @@
-<project name="LireRequestHandler" default="compile" basedir=".">
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="LireRequestHandler" default="go">
     <description>
-        This buildfile is used to build and package the LIRE RequestHandler for SOLR
+        This buildfile is used to build and package the LIRE RequestHandler for SOLR-4.4.0
     </description>
 
     <property name="src" value="src/main/java"/>
-    <property name="config" value="src/main/config"/>
+    <property name="config" value="src/main/resources"/>
     <property name="build" value="classes"/>
     <property name="dist" value="dist"/>
-    <property name="versionstring" value="0.9.3"/>
-    <!-- path to test files -->
-    <property name="test" value="test"/>
+    <property name="versionstring" value="0.9.5-SNAPSHOT"/>
+    <property name="solrlib" value="/Users/ferdous/projects/digitalcandy/search-app/conf/solr/cores/media_7/lib/lire"/>
+    <property name="test" value="src/main/test"/>
     <!-- path to documentation like README or CHANGES -->
     <property name="doc" value="src/main/doc"/>
     <!-- path to additional files like installer scripts, icons and batch files -->
     <property name="add.files" value="add.files"/>
-    <property name="solrlib" value="/Users/ferdous/projects/digitalcandy/search-app/conf/solr/cores/mediaitems_6/lib/lire"/>
-    <!--<property name="solrlib" value="/data/lucid/conf/solr/cores/mediaitems_3/lib/lire/"/>-->
+
+    <property name="ivy.install.version" value="2.4.0-rc1"/>
+    <property name="ivy.jar.dir" value="${basedir}/ivy"/>
+    <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
+    <property name="lib.dir" value="lib"/>
+    <property name="build.dir" value="classes"/>
+    <property name="src.dir" value="src"/>
+    <target name="download-ivy" unless="skip.download">
+        <mkdir dir="${ivy.jar.dir}"/>
+        <echo message="installing ivy..."/>
+        <get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" dest="${ivy.jar.file}" usetimestamp="true"/>
+    </target>
+
+    <path id="lib.path.id">
+        <pathelement location="${build}"/>
+        <fileset dir="${lib.dir}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="run.path.id">
+        <path refid="lib.path.id"/>
+        <path location="${build.dir}"/>
+    </path>
+
 
     <!-- define the classpath  -->
     <path id="classpath.path">
@@ -34,19 +57,17 @@
     </target>
 
 
-    <target name="compile" depends="clean, init">
+    <target name="compile" depends="clean, init, install-ivy">
         <propertyfile file="${config}/build.properties" comment="Properties of this specific CALIPH build">
             <entry key="build-date" type="date" value="now"/>
             <entry key="build-number" type="int" value="1" operation="+"/>
         </propertyfile>
         <property file="${config}/build.properties"/>
-        <echo file="default.mf">Name: LireRequestHandler${line.separator}Build-Date: ${touch.time}${line.separator}Build-Number: ${build-number}${line.separator}Class-Path: lib/commons-codec-1.8.jar lib/lire.jar lib/JOpenSurf.jar${line.separator}Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer${line.separator}</echo>
-        <!--<echo file="default.mf" append="false">Build-Date: ${touch.time}-->
-<!--Build-Number: ${build-number}-->
-<!--Class-Path: lib/commons-codec-1.8.jar lib/lire.jar lib/JOpenSurf.jar-->
-<!--Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer-->
-        <!--</echo>-->
-        <javac srcdir="${src}" destdir="${build}" debug="true" debuglevel="lines,vars,source">
+        <echo file="default.mf">Build-Date: ${touch.time}${line.separator}Build-Number: ${build-number}${line.separator}Class-Path: lib/commons-codec-1.8.jar lib/commons-math3-3.2.jar lib/JOpenSurf.jar lib/lire.jar
+            lib/lucene-analyzers-common-4.4.0.jar lib/lucene-core-4.4.0.jar lib/lucene-queries-4.4.0.jar lib/lucene-queryparser-4.4.0.jar lib/solr-core-4.4.0.jar lib/solr-solrj-4.4.0.jar${line.separator}Main-Class:
+            net.semanticmetadata.lire.solr.ParallelSolrIndexer${line.separator}
+        </echo>
+        <javac srcdir="${src}" destdir="${build}" debug="true" debuglevel="lines,vars,source" includeantruntime="false">
             <classpath refid="classpath.path"/>
         </javac>
         <copy todir="${build}">
@@ -62,17 +83,11 @@
         </copy>
     </target>
 
-    <target name="clean">
-        <delete dir="${build}"/>
-        <delete dir="${dist}"/>
-    </target>
-
     <target name="dist" depends="compile">
         <mkdir dir="${dist}"/>
-        <!--mkdir dir="${dist}/lib"/>
-        <mkdir dir="${dist}/docs"/-->
+        <mkdir dir="${dist}/lib"/>
 
-        <!--copy todir="${dist}">
+        <copy todir="${dist}/lib">
             <fileset dir="lib">
                 <patternset>
                     <include name="**/*.*"/>
@@ -80,44 +95,45 @@
                     <exclude name="**/.svn/*"/>
                 </patternset>
             </fileset>
-        </copy-->
-        <!--unjar src="lib/lire.jar" dest="${build}"/-->
-        <!-- replace the bit sampling data file -->
+        </copy>
 
-        <!--delete file="${build}/net/semanticmetadata/lire/indexing/hashing/LshBitSampling.obj"/-->
-        <!--copy file="LshBitSampling.obj" todir="${build}/net/semanticmetadata/lire/indexing/hashing/"/-->
-
-        <!--copy todir="${dist}/docs">
-            <fileset dir="src/main/docs">
-                <patternset>
-                    <include name="**/*.*"/>
-                    <exclude name="**/CVS/*"/>
-                    <exclude name="**/.svn/*"/>
-                </patternset>
-            </fileset>
-        </copy-->
-
+        <unjar src="lib/lire.jar" dest="${build}"/>
         <jar jarfile="${dist}/lire-request-handler.jar" manifest="default.mf" basedir="${build}">
-            <exclude name="**/apache/**" />
+            <exclude name="**/apache/**"/>
         </jar>
     </target>
 
     <target name="copy_jar_to_jetty" depends="dist">
+        <copydir src="${dist}/lib" dest="${solrlib}/lib"/>
         <copy file="dist/lire-request-handler.jar" todir="${solrlib}"/>
     </target>
 
-    <target name="index" depends="compile">
-        <!-- Note: This needs to be forked, otherwise multi threading won't work and the heap space will be exceeded soon. -->
-        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
+    <target name="install-ivy" depends="download-ivy" description="--> install ivy">
+        <path id="ivy.lib.path">
+            <pathelement location="${ivy.jar.file}"/>
+        </path>
+        <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+    </target>
+
+    <target name="go" depends="compile" description="index histograms">
+        <ivy:cachepath organisation="commons-lang" module="commons-lang" revision="2.6" pathid="lib.path.id" inline="true"/>
+        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="logs/indexer_error.log" output="logs/indexer_output.log">
             <jvmarg line="-Xmx2048M -server"/>
-            <!-- adapt this argument to use your pictures -->
-            <arg line="-i /data/digitalcandy/liresolr/out.txt -n 16 -f"/>
+            <!--<arg line="-i /Users/ferdous/projects/digitalcandy/liresolr/data/out.txt -n 16 -o /Users/ferdous/projects/digitalcandy/liresolr/data/xml/all.xml -f"/>-->
+            <arg line="-i /Users/ferdous/projects/digitalcandy/liresolr/data/out.txt -n 16 -f"/>
 
         </java>
     </target>
-    <target name="web">
-        <war destfile="dist/web.war" webxml="src/main/web/WEB-INF/web.xml">
-            <fileset dir="src/main/web"/>
-        </war>
+
+    <target name="clean" description="--> clean the project">
+        <delete dir="${build}" includeemptydirs="true" quiet="true"/>
+        <delete dir="${dist}" includeemptydirs="true" quiet="true"/>
     </target>
+    <target name="clean-ivy" description="--> clean the ivy installation">
+        <delete dir="${ivy.jar.dir}"/>
+    </target>
+    <target name="clean-cache" depends="install-ivy" description="--> clean the ivy cache">
+        <ivy:cleancache/>
+    </target>
+
 </project>

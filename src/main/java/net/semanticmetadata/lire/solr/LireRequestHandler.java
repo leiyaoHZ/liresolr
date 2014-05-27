@@ -354,7 +354,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 			}
 
     		/*SolrSurfFeatureHistogramBuilder sh = new SolrSurfFeatureHistogramBuilder(null);
-        	sh.setClusterFile(req.getCore().getDataDir() + "/clusters-surf.dat");
+    		sh.setClusterFile(req.getCore().getDataDir() + "/clusters-surf.dat");
         	// Get Visual Words
         	query = sh.getVisualWords(query);
     		

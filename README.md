@@ -221,7 +221,7 @@ to be sent to the Solr Server.
 
 To index images by the SURF method check a link http://www.semanticmetadata.net/wiki/doku.php?id=lire:bovw
 
-You can also use a [LireSolrIndexer](https://bitbucket.org/dudaerich/liresolrindexer) This is preferred method if you want to use **/lireId** or **/lireSim** requests.
+You can also use a [LireSolrIndexer](https://github.com/dynamicguy/liresolr) This is preferred method if you want to use **/lireId** or **/lireSim** requests.
 
 Simple Web Application
 ======================

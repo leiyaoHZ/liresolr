@@ -43,7 +43,7 @@ import java.util.List;
 // <delete><query>id:*</query></delete>
 
 public class AddImages {
-	static String baseURL = "http://localhost:8888/solr/MediaItems";
+	static String baseURL = "http://localhost:8888/solr/Media";
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		BitSampling.readHashFunctions();
