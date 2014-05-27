@@ -1,0 +1,7 @@
+Build-Date: 28.05.2014 01:48 AM
+Build-Number: 280
+Class-Path: lib/commons-codec-1.8.jar lib/lire.jar lib/JOpenSurf.jar
+Main-Class:
+            net.semanticmetadata.lire.solr.ParallelSolrIndexer
+
+        
