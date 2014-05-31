@@ -21,7 +21,7 @@ def save(folder_name, file_name):
         try:
             tree = ET.parse(xml_file)
             fields = tree.findall("doc/field")
-            params = [{'id': file_name, 'title': {'set': file_name}}]
+            params = [{'id': file_name, 'title': file_name}]
 
             for field in fields:
               key = field.get('name')
