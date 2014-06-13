@@ -9,7 +9,7 @@ import urllib2
 import xml.etree.ElementTree as ET
 
 
-def run(folder_name="/Users/ferdous/projects/digitalcandy/liresolr/data/images/"):
+def run(folder_name="/Users/ferdous/projects/digitalcandy/liresolr/data/flickr-10k-negative/"):
     for file_name in os.listdir(folder_name):
         if file_name.endswith("xml"):
             save(folder_name, file_name)

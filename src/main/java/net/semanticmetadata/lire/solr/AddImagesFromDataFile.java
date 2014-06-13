@@ -31,7 +31,7 @@ public class AddImagesFromDataFile {
 //        BitSampling.readHashFunctions(new FileInputStream("LshBitSampling.obj"));
 		BitSampling.readHashFunctions();
 		AddImagesFromDataFile a = new AddImagesFromDataFile();
-		a.createXml(new File("D:/Temp"), new File("D:\\DataSets/wipo_v10.out"));
+		a.createXml(new File("/Users/ferdous/projects/digitalcandy/liresolr/data/xml/out"), new File("/Users/ferdous/projects/digitalcandy/liresolr/data/xml/out.txt"));
 	}
 
 	public void createXml(File outDirectory, File inputFile) throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
@@ -44,50 +44,50 @@ public class AddImagesFromDataFile {
 		FileWriter out = new FileWriter(outDirectory.getPath() + "/data_001.xml", false);
 		int fileCount = 1;
 		out.write("<add>\n");
-		while ((tmp = in.read(tempInt, 0, 4)) > 0) {
-			tmp = SerializationUtils.toInt(tempInt);
-			// read file name:
-			in.read(temp, 0, tmp);
-			String filename = new String(temp, 0, tmp);
-			// normalize Filename to full path.
-			File file = new File(filename);
-			out.write("\t<doc>\n");
-			// id and file name ...
-			out.write("\t\t<field name=\"id\">");
-			out.write(file.getCanonicalPath().replace("D:\\DataSets\\WIPO-", "").replace('\\', '/'));
-			out.write("</field>\n");
-			out.write("\t\t<field name=\"title\">");
-			out.write(file.getName());
-			out.write("</field>\n");
-//            System.out.print(filename);
-			while ((tmpFeature = in.read()) < 255) {
-//                System.out.print(", " + tmpFeature);
-				LireFeature f = (LireFeature) Class.forName(Extractor.features[tmpFeature]).newInstance();
-				// byte[] length ...
-				in.read(tempInt, 0, 4);
-				tmp = SerializationUtils.toInt(tempInt);
-				// read feature byte[]
-				int read = in.read(temp, 0, tmp);
-				if (read != tmp) System.err.println("!!!");
-				f.setByteArrayRepresentation(temp, 0, tmp);
-				addToDocument(f, out, file);
-//                d.add(new StoredField(Extractor.featureFieldNames[tmpFeature], f.getByteArrayRepresentation()));
-			}
-			out.write("\t</doc>\n");
-			count++;
-			if (count % 100000 == 0) {
-//                break;
-				out.write("</add>\n");
-				out.close();
-				fileCount++;
-				out = new FileWriter(outDirectory.getPath() + "/data_0" + ((fileCount < 10) ? "0" + fileCount : fileCount) + ".xml", false);
-				out.write("<add>\n");
-			}
-			if (verbose) {
-				if (count % 1000 == 0) System.out.print('.');
-				if (count % 10000 == 0) System.out.println(" " + count);
-			}
-		}
+//		while ((tmp = in.read(tempInt, 0, 4)) > 0) {
+//			tmp = SerializationUtils.toInt(tempInt);
+//			// read file name:
+//			in.read(temp, 0, tmp);
+//			String filename = new String(temp, 0, tmp);
+//			// normalize Filename to full path.
+//			File file = new File(filename);
+//			out.write("\t<doc>\n");
+//			// id and file name ...
+//			out.write("\t\t<field name=\"id\">");
+//			out.write(file.getCanonicalPath().replace(outDirectory.getPath(), "").replace('\\', '/'));
+//			out.write("</field>\n");
+//			out.write("\t\t<field name=\"title\">");
+//			out.write(file.getName());
+//			out.write("</field>\n");
+////            System.out.print(filename);
+//			while ((tmpFeature = in.read()) < 255) {
+////                System.out.print(", " + tmpFeature);
+//				LireFeature f = (LireFeature) Class.forName(Extractor.features[tmpFeature]).newInstance();
+//				// byte[] length ...
+//				in.read(tempInt, 0, 4);
+//				tmp = SerializationUtils.toInt(tempInt);
+//				// read feature byte[]
+//				int read = in.read(temp, 0, tmp);
+//				if (read != tmp) System.err.println("!!!");
+//				f.setByteArrayRepresentation(temp, 0, tmp);
+//				addToDocument(f, out, file);
+////                d.add(new StoredField(Extractor.featureFieldNames[tmpFeature], f.getByteArrayRepresentation()));
+//			}
+//			out.write("\t</doc>\n");
+//			count++;
+//			if (count % 100000 == 0) {
+////                break;
+//				out.write("</add>\n");
+//				out.close();
+//				fileCount++;
+//				out = new FileWriter(outDirectory.getPath() + "/data_0" + ((fileCount < 10) ? "0" + fileCount : fileCount) + ".xml", false);
+//				out.write("<add>\n");
+//			}
+//			if (verbose) {
+//				if (count % 1000 == 0) System.out.print('.');
+//				if (count % 10000 == 0) System.out.println(" " + count);
+//			}
+//		}
 		if (verbose) System.out.println(" " + count);
 		out.write("</add>\n");
 		out.close();

@@ -40,6 +40,9 @@ public class SearchImages {
 		}
 
 		URL u = new URL(baseURL + "?q=" + URLEncoder.encode(query, "utf-8") + "&wt=xml&rows=500");
+
+		System.out.println(u.toString());
+
 		InputStream in = u.openStream();
 		SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 		SolrResponseHandler dh = new SolrResponseHandler();

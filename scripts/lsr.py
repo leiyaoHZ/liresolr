@@ -2,7 +2,7 @@
 
 import os
 
-def run(folder_name="/Users/ferdous/projects/digitalcandy/liresolr/data/images/"):
+def run(folder_name="/Users/ferdous/projects/digitalcandy/liresolr/data/flickr-10k-negative/"):
     out_file = open('/Users/ferdous/projects/digitalcandy/liresolr/out.txt', 'wb')
     for item in os.listdir(folder_name):
         if not item.endswith("xml"):

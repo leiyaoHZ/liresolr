@@ -118,7 +118,7 @@
         <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="logs/indexer_error.log" output="logs/indexer_output.log">
             <jvmarg line="-Xmx2048M -server"/>
             <!--<arg line="-i /Users/ferdous/projects/digitalcandy/liresolr/data/out.txt -n 16 -o /Users/ferdous/projects/digitalcandy/liresolr/data/xml/all.xml -f"/>-->
-            <arg line="-i /Users/ferdous/projects/digitalcandy/liresolr/data/out.txt -n 16 -f"/>
+            <arg line="-i /Users/ferdous/projects/digitalcandy/liresolr/out.txt -n 16 -f"/>
 
         </java>
     </target>

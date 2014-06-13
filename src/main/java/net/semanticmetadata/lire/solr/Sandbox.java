@@ -1,42 +1,3 @@
-/*
- * This file is part of the LIRE project: http://www.semanticmetadata.net/lire
- * LIRE is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * LIRE is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with LIRE; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * We kindly ask you to refer the any or one of the following publications in
- * any publication mentioning or employing Lire:
- *
- * Lux Mathias, Savvas A. Chatzichristofis. Lire: Lucene Image Retrieval –
- * An Extensible Java CBIR Library. In proceedings of the 16th ACM International
- * Conference on Multimedia, pp. 1085-1088, Vancouver, Canada, 2008
- * URL: http://doi.acm.org/10.1145/1459359.1459577
- *
- * Lux Mathias. Content Based Image Retrieval with LIRE. In proceedings of the
- * 19th ACM International Conference on Multimedia, pp. 735-738, Scottsdale,
- * Arizona, USA, 2011
- * URL: http://dl.acm.org/citation.cfm?id=2072432
- *
- * Mathias Lux, Oge Marques. Visual Information Retrieval using Java and LIRE
- * Morgan & Claypool, 2013
- * URL: http://www.morganclaypool.com/doi/abs/10.2200/S00468ED1V01Y201301ICR025
- *
- * Copyright statement:
- * --------------------
- * (c) 2002-2013 by Mathias Lux (mathias@juggle.at)
- *     http://www.semanticmetadata.net/lire, http://www.lire-project.net
- */
-
 package net.semanticmetadata.lire.solr;
 
 import net.semanticmetadata.lire.DocumentBuilder;
@@ -62,8 +23,6 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.util.BytesRef;
 import org.apache.solr.common.params.SolrParams;
-import org.apache.solr.common.util.NamedList;
-import org.apache.solr.handler.RequestHandlerBase;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.search.SolrIndexSearcher;
@@ -74,11 +33,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
-public class Sandbox extends RequestHandlerBase {
+public class Sandbox {
 	private static HashMap<String, Class> fieldToClass = new HashMap<String, Class>(5);
 	private long time = 0;
 	private int countRequests = 0;
 	private int defaultNumberOfResults = 60;
+	private int defaultStartValue = 0;
 
 	/**
 	 * number of candidate results retrieved from the index. The higher this number, the slower,
@@ -101,9 +61,49 @@ public class Sandbox extends RequestHandlerBase {
 		}
 	}
 
-	@Override
-	public void init(NamedList args) {
-		super.init(args);
+
+	public static void main(String[] args) {
+//		SolrQueryRequest req = new SolrQueryRequest();
+//		SolrQueryResponse rsp = new SolrQueryResponse();
+
+
+		String paramUrl = "http://localhost/images/im190056.jpg";
+		String paramField = "cl_ha";
+
+		readHistogramBy(paramUrl, "cl_ha");
+		readHistogramBy(paramUrl, "jc_ha");
+		readHistogramBy(paramUrl, "oh_ha");
+		readHistogramBy(paramUrl, "ph_ha");
+		readHistogramBy(paramUrl, "eh_ha");
+	}
+
+	private static void readHistogramBy(String paramUrl, String paramField) {
+		LireFeature feat = null;
+		try {
+			BufferedImage img = ImageIO.read(new URL(paramUrl).openStream());
+			img = ImageUtils.trimWhiteSpace(img);
+			// getting the right feature per field:
+			if (paramField == null) feat = new EdgeHistogram();
+			else {
+				if (paramField.equals("cl_ha")) feat = new ColorLayout();
+				else if (paramField.equals("jc_ha")) feat = new JCD();
+				else if (paramField.equals("ph_ha")) feat = new PHOG();
+				else if (paramField.equals("oh_ha")) feat = new OpponentHistogram();
+				else feat = new EdgeHistogram();
+			}
+			feat.extract(img);
+			String histogram = Base64.encodeBase64String(feat.getByteArrayRepresentation());
+			int[] hashes = BitSampling.generateHashes(feat.getDoubleHistogram());
+
+			System.out.println(histogram);
+			System.out.println(hashes);
+
+		} catch (Exception e) {
+			System.err.println("Error reading image from URL: " + paramUrl + ": " + e.getMessage());
+//			e.printStackTrace();
+		} finally {
+
+		}
 	}
 
 	/**
@@ -118,7 +118,6 @@ public class Sandbox extends RequestHandlerBase {
 	 * @param rsp
 	 * @throws Exception
 	 */
-	@Override
 	public void handleRequestBody(SolrQueryRequest req, SolrQueryResponse rsp) throws Exception {
 		// (1) check if the necessary parameters are here
 		if (req.getParams().get("hashes") != null) { // we are searching for hashes ...
@@ -136,8 +135,8 @@ public class Sandbox extends RequestHandlerBase {
 
 	private void surfUrlSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, ParseException {
 		String url = req.getParams().get("url");
-		int rows = req.getParams().getInt("rows");
-		int start = req.getParams().getInt("rows");
+		int rows = req.getParams().getInt("rows", 20);
+		int start = req.getParams().getInt("start", 0);
 		String mode = req.getParams().get("mode");
 		SolrIndexSearcher searcher = req.getSearcher();
 		searcher.setSimilarity(new BM25Similarity());
@@ -161,7 +160,7 @@ public class Sandbox extends RequestHandlerBase {
 
 			LinkedList<HashMap<String, Comparable>> list = new LinkedList<HashMap<String, Comparable>>();
 
-			for (int i = 0; i < docs.scoreDocs.length; i++) {
+			for (int i = start; i < docs.scoreDocs.length; i++) {
 				float d = 1f / docs.scoreDocs[i].score;
 				HashMap<String, Comparable> m = new HashMap<String, Comparable>(2);
 				m.put("d", d);
@@ -196,7 +195,7 @@ public class Sandbox extends RequestHandlerBase {
 			float maxDistance = -1f;
 			float tmpScore;
 
-			for (int i = 0; i < docs.scoreDocs.length; i++) {
+			for (int i = start; i < docs.scoreDocs.length; i++) {
 				Document doc = reader.document(docs.scoreDocs[i].doc);
 
 				// load interest points from document
@@ -241,6 +240,7 @@ public class Sandbox extends RequestHandlerBase {
 	private void surfIdSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, ParseException {
 		String id = req.getParams().get("id");
 		int rows = req.getParams().getInt("rows");
+		int start = req.getParams().getInt("start", 0);
 		String mode = req.getParams().get("mode");
 		SolrIndexSearcher searcher = req.getSearcher();
 		searcher.setSimilarity(new BM25Similarity());
@@ -274,7 +274,7 @@ public class Sandbox extends RequestHandlerBase {
 
 				LinkedList<HashMap<String, Comparable>> list = new LinkedList<HashMap<String, Comparable>>();
 
-				for (int i = 0; i < docs.scoreDocs.length; i++) {
+				for (int i = start; i < docs.scoreDocs.length; i++) {
 					float d = 1f / docs.scoreDocs[i].score;
 					HashMap<String, Comparable> m = new HashMap<String, Comparable>(2);
 					m.put("d", d);
@@ -309,7 +309,7 @@ public class Sandbox extends RequestHandlerBase {
 				float maxDistance = -1f;
 				float tmpScore;
 
-				for (int i = 0; i < docs.scoreDocs.length; i++) {
+				for (int i = start; i < docs.scoreDocs.length; i++) {
 					Document doc = reader.document(docs.scoreDocs[i].doc);
 
 					// load interest points from document
@@ -387,12 +387,16 @@ public class Sandbox extends RequestHandlerBase {
 		String paramId = req.getParams().get("id");
 		String paramField = "cl_ha";
 		int paramRows = defaultNumberOfResults;
+		int paramStarts = defaultStartValue;
 
 		if (req.getParams().get("field") != null)
 			paramField = req.getParams().get("field");
 
 		if (req.getParams().getInt("rows") != null)
 			paramRows = req.getParams().getInt("rows");
+
+		if (req.getParams().getInt("start") != null)
+			paramStarts = req.getParams().getInt("start");
 
 		// SURF method
 		if ("su_ha".equals(paramField)) {
@@ -421,7 +425,7 @@ public class Sandbox extends RequestHandlerBase {
 				int[] hashes = BitSampling.generateHashes(queryFeature.getDoubleHistogram());
 				// just use 50% of the hashes for search ...
 				BooleanQuery query = createQuery(hashes, paramField, 0.5d);
-				doSearch(rsp, searcher, paramField, paramRows, query, queryFeature);
+				doSearch(rsp, searcher, paramField, paramStarts, paramRows, query, queryFeature);
 			} else {
 				rsp.add("Error", "Did not find an image with the given id " + req.getParams().get("id"));
 			}
@@ -470,12 +474,18 @@ public class Sandbox extends RequestHandlerBase {
 	private void handleUrlSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException, ParseException {
 		SolrParams params = req.getParams();
 		String paramUrl = params.get("url");
+
 		String paramField = "cl_ha";
 		if (req.getParams().get("field") != null)
 			paramField = req.getParams().get("field");
+
 		int paramRows = defaultNumberOfResults;
 		if (params.get("rows") != null)
 			paramRows = params.getInt("rows");
+
+		int paramStarts = defaultStartValue;
+		if (params.get("start") != null)
+			paramStarts = params.getInt("start");
 
 		// SURF method
 		if ("su_ha".equals(paramField)) {
@@ -507,7 +517,7 @@ public class Sandbox extends RequestHandlerBase {
 			e.printStackTrace();
 		}
 		// search if the feature has been extracted.
-		if (feat != null) doSearch(rsp, req.getSearcher(), paramField, paramRows, query, feat);
+		if (feat != null) doSearch(rsp, req.getSearcher(), paramField, paramStarts, paramRows, query, feat);
 	}
 
 	private void handleExtract(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException {
@@ -569,13 +579,19 @@ public class Sandbox extends RequestHandlerBase {
 		String paramField = "cl_ha";
 		if (req.getParams().get("field") != null)
 			paramField = req.getParams().get("field");
+
 		int paramRows = defaultNumberOfResults;
 		if (params.getInt("rows") != null)
 			paramRows = params.getInt("rows");
+
+		int paramStarts = defaultStartValue;
+		if (params.get("start") != null)
+			paramStarts = params.getInt("start");
+
 		// create boolean query:
 //        System.out.println("** Creating query.");
 		BooleanQuery query = new BooleanQuery();
-		for (int i = 0; i < hashes.length; i++) {
+		for (int i = paramStarts; i < hashes.length; i++) {
 			// be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
 			hashes[i] = hashes[i].trim();
 			if (hashes[i].length() > 0) {
@@ -590,7 +606,7 @@ public class Sandbox extends RequestHandlerBase {
 		queryFeature.setByteArrayRepresentation(featureVector);
 
 		// get results:
-		doSearch(rsp, searcher, paramField, paramRows, query, queryFeature);
+		doSearch(rsp, searcher, paramField, paramStarts, paramRows, query, queryFeature);
 	}
 
 	/**
@@ -606,7 +622,7 @@ public class Sandbox extends RequestHandlerBase {
 	 * @throws IllegalAccessException
 	 * @throws InstantiationException
 	 */
-	private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String field, int maximumHits, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
+	private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String field, int paramStarts, int maximumHits, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
 		// temp feature instance
 		LireFeature tmpFeature = queryFeature.getClass().newInstance();
 		// Taking the time of search for statistical purposes.
@@ -626,7 +642,8 @@ public class Sandbox extends RequestHandlerBase {
 		// iterating and re-ranking the documents.
 		BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), name); // ***  #
 		BytesRef bytesRef = new BytesRef();
-		for (int i = 0; i < docs.scoreDocs.length; i++) {
+
+		for (int i = paramStarts; i < docs.scoreDocs.length; i++) {
 			// using DocValues to retrieve the field values ...
 			binaryValues.get(docs.scoreDocs[i].doc, bytesRef);
 			tmpFeature.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);
@@ -663,24 +680,6 @@ public class Sandbox extends RequestHandlerBase {
 		}
 		rsp.add("docs", list);
 		// rsp.add("Test-name", "Test-val");
-	}
-
-	@Override
-	public String getDescription() {
-		return "LIRE Request Handler to add images to an index and search them. Search images by id, by url and by extracted features.";
-	}
-
-	@Override
-	public String getSource() {
-		return "https://github.com/dynamicguy/liresolr";
-	}
-
-	@Override
-	public NamedList<Object> getStatistics() {
-		// Change stats here to get an insight in the admin console.
-		NamedList<Object> statistics = super.getStatistics();
-		statistics.add("Number of Requests", countRequests);
-		return statistics;
 	}
 
 	private BooleanQuery createQuery(int[] hashes, String paramField, double size) {
