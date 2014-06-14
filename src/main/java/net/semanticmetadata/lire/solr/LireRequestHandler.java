@@ -85,7 +85,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 	 * number of candidate results retrieved from the index. The higher this number, the slower,
 	 * the but more accurate the retrieval will be.
 	 */
-	private int candidateResultNumber = 5500;
+	private int candidateResultNumber = 20000;
 
 	static {
 		fieldToClass.put("cl_ha", ColorLayout.class);
