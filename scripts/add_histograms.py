@@ -9,7 +9,7 @@ import urllib2
 import xml.etree.ElementTree as ET
 
 
-def run(folder_name="/Users/ferdous/projects/digitalcandy/liresolr/data/flickr-10k-negative/"):
+def run(folder_name="/data/digitalcandy/ml/images/"):
     for file_name in os.listdir(folder_name):
         if file_name.endswith("xml"):
             save(folder_name, file_name)
@@ -20,8 +20,8 @@ def save(folder_name, file_name):
         xml_file = folder_name + file_name
         try:
             tree = ET.parse(xml_file)
-            fields = tree.findall("doc/field")
-            params = [{'id': file_name, 'title': file_name}]
+            fields = tree.findall("field")
+            params = [{'id': file_name, 'title': file_name, 'url': 'http://localhost/images/'+file_name[:-9]}]
 
             for field in fields:
               key = field.get('name')

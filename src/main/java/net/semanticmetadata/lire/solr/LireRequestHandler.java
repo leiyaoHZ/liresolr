@@ -85,7 +85,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 	 * number of candidate results retrieved from the index. The higher this number, the slower,
 	 * the but more accurate the retrieval will be.
 	 */
-	private int candidateResultNumber = 1500;
+	private int candidateResultNumber = 5500;
 
 	static {
 		fieldToClass.put("cl_ha", ColorLayout.class);
@@ -202,9 +202,15 @@ public class LireRequestHandler extends RequestHandlerBase {
 		SolrIndexSearcher searcher = req.getSearcher();
 		DirectoryReader indexReader = searcher.getIndexReader();
 		double maxDoc = indexReader.maxDoc();
+
 		int paramRows = defaultNumberOfResults;
 		if (req.getParams().getInt("rows") != null)
 			paramRows = req.getParams().getInt("rows");
+
+		int paramStarts = defaultStartValue;
+		if (req.getParams().getInt("start") != null)
+			paramStarts = req.getParams().getInt("start");
+
 		LinkedList list = new LinkedList();
 		while (list.size() < paramRows) {
 			HashMap m = new HashMap(2);
@@ -239,8 +245,8 @@ public class LireRequestHandler extends RequestHandlerBase {
 			paramRows = params.getInt("rows");
 
 		int paramStarts = defaultStartValue;
-		if (req.getParams().getInt("start") != null)
-			paramStarts = req.getParams().getInt("start");
+		if (params.get("start") != null)
+			paramStarts = params.getInt("start");
 
 		LireFeature feat = null;
 		BooleanQuery query = null;
@@ -335,8 +341,8 @@ public class LireRequestHandler extends RequestHandlerBase {
 			paramRows = params.getInt("rows");
 
 		int paramStarts = defaultStartValue;
-		if (req.getParams().getInt("start") != null)
-			paramStarts = req.getParams().getInt("start");
+		if (params.getInt("start") != null)
+			paramStarts = params.getInt("start");
 
 		// create boolean query:
 //        System.out.println("** Creating query.");
@@ -365,14 +371,15 @@ public class LireRequestHandler extends RequestHandlerBase {
 	 * @param rsp
 	 * @param searcher
 	 * @param field
-	 * @param maximumHits
+	 * @param paramRows
 	 * @param query
 	 * @param queryFeature
 	 * @throws IOException
 	 * @throws IllegalAccessException
 	 * @throws InstantiationException
 	 */
-	private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String field, int paramStarts, int maximumHits, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
+	private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String field, int paramStarts, int paramRows, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
+		int maximumHits = paramStarts + paramRows;
 		// temp feature instance
 		LireFeature tmpFeature = queryFeature.getClass().newInstance();
 		// Taking the time of search for statistical purposes.
@@ -392,7 +399,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 		// iterating and re-ranking the documents.
 		BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), name); // ***  #
 		BytesRef bytesRef = new BytesRef();
-		for (int i = paramStarts; i < docs.scoreDocs.length; i++) {
+		for (int i = 0; i < docs.scoreDocs.length; i++) {
 			// using DocValues to retrieve the field values ...
 			binaryValues.get(docs.scoreDocs[i].doc, bytesRef);
 			tmpFeature.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);
@@ -427,7 +434,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 //            m.put(field.replace("_ha", "_hi"), result.getDocument().getBinaryValue(field));
 			list.add(m);
 		}
-		rsp.add("docs", list);
+		rsp.add("docs", list.subList(paramStarts, maximumHits));
 	}
 
 	@Override

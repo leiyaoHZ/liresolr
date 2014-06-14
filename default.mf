@@ -1,4 +1,4 @@
-Build-Date: 08.06.2014 11:01 PM
-Build-Number: 462
+Build-Date: 14.06.2014 01:51 PM
+Build-Number: 499
 Class-Path: lib/commons-codec-1.8.jar lib/commons-math3-3.2.jar lib/JOpenSurf.jar lib/lire.jar lib/lucene-analyzers-common-4.6-SNAPSHOT.jar lib/lucene-core-4.6-SNAPSHOT.jar lib/lucene-queries-4.6-SNAPSHOT.jar lib/lucene-queryparser-4.6-SNAPSHOT.jar lib/solr-core-4.6-SNAPSHOT.jar lib/solr-solrj-4.6-SNAPSHOT.jar
 Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer

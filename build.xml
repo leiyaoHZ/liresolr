@@ -49,7 +49,7 @@
         </fileset>
     </path>
 
-    <target name="init">
+    <target name="init" description="--> initialize">
         <tstamp/>
         <tstamp>
             <format property="touch.time" pattern="dd.MM.yyyy hh:mm aa"/>
@@ -58,7 +58,7 @@
     </target>
 
 
-    <target name="compile" depends="clean, init, install-ivy">
+    <target name="compile" depends="clean, init, install-ivy" description="--> compile">
         <propertyfile file="${config}/build.properties" comment="Properties of this specific CALIPH build">
             <entry key="build-date" type="date" value="now"/>
             <entry key="build-number" type="int" value="1" operation="+"/>
@@ -81,7 +81,7 @@
         </copy>
     </target>
 
-    <target name="dist" depends="compile">
+    <target name="dist" depends="compile" description="--> distribute jar. depends on compile">
         <mkdir dir="${dist}"/>
         <mkdir dir="${dist}/lib"/>
 
@@ -101,7 +101,13 @@
         </jar>
     </target>
 
-    <target name="copy_jar_to_jetty" depends="dist">
+    <target name="clean_solr_lib" description="--> clean the solr libs from solr lib">
+        <delete dir="${solrlib}" includeemptydirs="true" quiet="false"/>
+        <mkdir dir="${solrlib}"/>
+    </target>
+
+
+    <target name="copy_jar_to_jetty" depends="dist,clean_solr_lib" description="--> copy dist jar to solr lib path. depends on dist">
         <copydir src="${dist}/lib" dest="${solrlib}/lib"/>
         <copy file="dist/lire-request-handler.jar" todir="${solrlib}"/>
     </target>
@@ -113,12 +119,12 @@
         <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
     </target>
 
-    <target name="go" depends="compile" description="index histograms">
+    <target name="go" depends="compile" description="--> index histograms (default task)">
         <ivy:cachepath organisation="commons-lang" module="commons-lang" revision="2.6" pathid="lib.path.id" inline="true"/>
         <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="logs/indexer_error.log" output="logs/indexer_output.log">
             <jvmarg line="-Xmx2048M -server"/>
-            <!--<arg line="-i /Users/ferdous/projects/digitalcandy/liresolr/data/out.txt -n 16 -o /Users/ferdous/projects/digitalcandy/liresolr/data/xml/all.xml -f"/>-->
-            <arg line="-i /Users/ferdous/projects/digitalcandy/liresolr/out.txt -n 16 -f"/>
+            <!--<arg line="-i out.txt -n 16 -o all.xml -f"/>-->
+            <arg line="-i out.txt -n 16 -f"/>
 
         </java>
     </target>
